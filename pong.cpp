@@ -3,13 +3,39 @@
 #include <conio.h>
 #include <time.h>
 
+#include<conio.h>
+#include<dos.h>
+#include<stdlib.h>
+#include<string.h>
+
+#define SCREEN_WIDTH 90
+#define SCREEN_HEIGHT 26
+#define WIN_WIDTH 70
+#define MENU_WIDTH 20
+#define GAP_SIZE 7
+#define PIPE_DIF 45
+
 using namespace std;
+
+HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+COORD CursorPosition;
 
 void gotoxy(int x, int y){
 	COORD c;
 	c.X = x;
 	c.Y = y;
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
+}
+
+void setcursor(bool visible, DWORD size) 
+{
+	if(size == 0)
+		size = 20;	
+	
+	CONSOLE_CURSOR_INFO lpCursor;	
+	lpCursor.bVisible = visible;
+	lpCursor.dwSize = size;
+	SetConsoleCursorInfo(console,&lpCursor);
 }
 
 void hideCursor(){
@@ -19,7 +45,24 @@ void hideCursor(){
 	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor);
 }
 
+void drawBorder(){ 
+	
+	for(int i=0; i<SCREEN_WIDTH; i++){
+		gotoxy(i,0); cout<<"_";
+		gotoxy(i,SCREEN_HEIGHT); cout<<"_";
+	}
+	
+	for(int i=0; i<SCREEN_HEIGHT; i++){
+		gotoxy(0,i); cout<<"|";
+		gotoxy(SCREEN_WIDTH,i); cout<<"|";
+	}
+	for(int i=0; i<SCREEN_HEIGHT; i++){
+		gotoxy(WIN_WIDTH,i); cout<<"|";
+	}
+}
+
 int life;
+int score = 0;
 int const screenHeight = 20;
 int const screenWidth = 30;
 int map[screenHeight][screenWidth];
@@ -32,6 +75,10 @@ char heart[8][18] = {"..#####...#####..",
 					 "........#........"};
 					 
 bool decre_life;
+
+void updateScore(){
+	gotoxy(WIN_WIDTH + 7, 5);cout<<"Score: "<<score<<endl;
+}
 
 class Paddle{
 	public:
@@ -101,14 +148,17 @@ class Ball{
 			dir = 4;
 			life--;
 		}else if(map[fy][fx] != 0 || map[y][fx] != 0 || map[fy][x] != 0 || map[fy][fx] == 2 || map[y][fx] == 2 || map[fy][x] == 2){
-			if(map[fy][fx] == 2) heart[fy-2][fx-6] = '.';
-			if(map[y][fx] == 2) heart[y-2][fx-6] = '.';
-			if(map[fy][x] == 2) heart[fy-2][x-6] = '.';
+			if(map[fy][fx] == 2){ heart[fy-2][fx-6] = '.'; score++;
+			updateScore();}
+			if(map[y][fx] == 2){ heart[y-2][fx-6] = '.'; score++;
+			updateScore();}
+			if(map[fy][x] == 2){ heart[fy-2][x-6] = '.'; score++;
+			updateScore();}
 			
 			if(map[y][fx] != 0) bounce(fx,y);
 			else if(map[fy][x] != 0) bounce(x,fy);
 			else if(map[fy][fx] != 0) bounce(fx,fy);
-			
+
 			return true;
 		}
 		
@@ -225,10 +275,34 @@ void movements(){
 
 void gameOver(){
 	system("cls");
-	cout << " GAMEOVER ";
+	cout<<endl;
+	cout<<"\t\t--------------------------"<<endl;
+	cout<<"\t\t-------- Game Over -------"<<endl;
+	cout<<"\t\t--------------------------"<<endl<<endl;
+	cout<<"\t\tYour score is: " << score <<endl<<endl;
+	cout<<"\t\tPress any key to go back to menu.";
+	getch();
 }
 
-int main(){
+void startGame(){
+	
+	system("cls"); 
+	drawBorder();
+	updateScore();
+	
+	score = 0;
+	
+	gotoxy(WIN_WIDTH + 5, 2);cout<<"Master Blaster";
+	gotoxy(WIN_WIDTH + 6, 4);cout<<"----------";
+	gotoxy(WIN_WIDTH + 6, 6);cout<<"----------";
+	gotoxy(WIN_WIDTH + 7, 12);cout<<"Control ";
+	gotoxy(WIN_WIDTH + 7, 13);cout<<"-------- ";
+	gotoxy(WIN_WIDTH + 2, 14);cout<<"    Arrow keys";
+	
+	gotoxy(10, 5);cout<<"Press any key to start";
+	getch();
+	gotoxy(10, 5);cout<<"                      ";
+	
 	hideCursor();
 	setup();
 	while(life > 0){
@@ -238,4 +312,40 @@ int main(){
 		movements();
 	}
 	gameOver();
+}
+
+void instructions(){
+	
+	system("cls");
+	cout<<"Instructions";
+	cout<<"\n----------------";
+	cout<<"\n Use arrow keys - left and right - to move the platform";
+	cout<<"\n\nPress any key to go back to menu";
+	getch();
+}
+
+
+int main(){	
+	setcursor(0,0); 
+	srand( (unsigned)time(NULL)); 
+	do{
+		system("cls");
+		gotoxy(10,5); cout<<" -------------------------- "; 
+		gotoxy(10,6); cout<<" |     Master Blaster     | "; 
+		gotoxy(10,7); cout<<" -------------------------- ";
+		gotoxy(10,9); cout<<"1. Start Game";
+		gotoxy(10,10); cout<<"2. Instructions";	 
+		gotoxy(10,11); cout<<"3. Quit";
+		gotoxy(10,13); cout<<"Select option: ";
+		char op = getche();
+		
+		if( op=='1') startGame();
+		else if( op=='2') instructions();
+		else if( op=='3') exit(0);
+		
+	}while(1);
+	
+	return 0;
+	
+	
 }
